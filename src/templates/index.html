@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../static/LV_favicon.png" type="image/x-icon">
+    <div class="icon-container">
+      <img src="../static/panel_light.png" alt="Light Bulb Venus Icon" class="light-bulb-icon">
+    </div>
+    <style>
+      header {
+	  text-align: center; /* Center the content inside the header */
+	  margin-bottom: 20px; /* Add some space below the title */
+      }
+      .page-title {
+	  font-size: 24px; /* Adjust font size as needed */
+	  font-weight: bold; /* Make the text bold for emphasis */
+      }
+      .icon-container {
+	  text-align: center; /* Center the icon horizontally */
+	  margin-top: 20px; /* Add space above the icon */
+	  margin-bottom: 20px; /* Add space below the icon if needed */
+	  font-size: 40px; /* Adjust font size as needed */
+	  font-weight: bold; /* Make the text bold for emphasis */
+      }
+      .light-bulb-icon {
+	  width: 500px; /* Adjust the width for smaller size */
+	  height: auto; /* Maintain aspect ratio */
+      }
+        .status-box {
+	  font-size: 20px; /* Adjust font size as needed */
+            width: 200px;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 12px;
+            color: #333333; /* Dark Gray for better readability */
+            text-align: center;
+            display: inline-block;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+	    margin-top: 30px;
+        }
+        .log-box {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+	    width: 95%; /* Set width to 100% */
+	    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+        .status-box.yellow {
+            background: linear-gradient(135deg, #FFD700, #FFA500); /* Gradient for yellow status */
+            color: #333333; /* Darker text on yellow gradient */
+        }
+        .status-box.green {
+            background-color: #32CD32; /* Lime Green */
+            color: white;
+        }
+        .status-box.red {
+            background-color: #FF4500; /* Orange Red */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+  <div id="statuses" align="center">
+        {% for robot, details in status.items() %}
+        <div class="status-box {{ details.color }}">
+            <h3>{{ robot }}: {{ details.color.upper() }}</h3>
+            {% if details.step %}
+            <p>Step: {{ details.step }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="log-box">
+        <h3>Trace Logs</h3>
+        <ul id="trace-log-list">
+            <!-- Log entries will be dynamically added here -->
+        </ul>
+    </div>
+
+    <script>
+        function fetchStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => updateStatuses(data))
+                .catch(error => console.error('Error fetching status:', error));
+        }
+
+        function fetchTraceLogs() {
+            fetch('/trace_logs')
+                .then(response => response.json())
+                .then(data => updateTraceLogs(data))
+                .catch(error => console.error('Error fetching trace logs:', error));
+        }
+
+        function updateStatuses(statusData) {
+            const statuses = document.getElementById('statuses');
+            statuses.innerHTML = ''; // Clear existing statuses
+            for (const [robot, details] of Object.entries(statusData)) {
+                const statusBox = document.createElement('div');
+                statusBox.className = `status-box ${details.color}`;
+                
+                const header = document.createElement('h3');
+                header.textContent = `${robot}: ${details.color.toUpperCase()}`;
+                
+                statusBox.appendChild(header);
+
+                if (details.step) {
+                    const stepInfo = document.createElement('p');
+                    stepInfo.textContent = `Step: ${details.step}`;
+                    statusBox.appendChild(stepInfo);
+                }
+
+                statuses.appendChild(statusBox);
+            }
+        }
+
+        function updateTraceLogs(logs) {
+            const logList = document.getElementById('trace-log-list');
+            logList.innerHTML = ''; // Clear existing log entries
+            logs.forEach(log => {
+                const listItem = document.createElement('li');
+                listItem.textContent = log;
+                logList.appendChild(listItem);
+            });
+        }
+
+        // Fetch status and trace logs every 5 seconds
+        setInterval(fetchStatus, 1000);
+        setInterval(fetchTraceLogs, 1000);
+
+        // Initial fetch
+        fetchStatus();
+        fetchTraceLogs();
+    </script>
+</body>
+</html>
