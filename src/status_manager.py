@@ -1,5 +1,6 @@
 import re
-
+from src.third_parties.openai import completion_with_backoff, MODEL_HIGH
+from ai import prompts
 
 status_dict = {
     "Robot 1": {"color": "green", "step": "0"},
@@ -12,12 +13,26 @@ status_dict = {
 log_trace_lines = []
 
 
+def ai(line):
+    if (('complete' in line) and ('STAR' in line) or ('err' in line)):
+        messages = [
+            {"role": "system", "content": prompts.log},
+            {"role": "user", "content": line}]
+        m = completion_with_backoff(
+            model=MODEL_HIGH,
+            messages=messages
+        )
+        log_trace_lines.append(m['choices'][0]["message"]["content"])
+
+
 def analyze(line, robot="Robot 1"):
     # Capture trace lines
     match = re.search(r"Trace - complete; Kinesin (\w+)", line)
     if match:
         status_dict[robot]["step"] = match.group(1)
         log_trace_lines.append(line.strip())
+
+    ai(line)
 
     print(line, status_dict)
 

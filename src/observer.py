@@ -7,7 +7,7 @@ from status_manager import analyze
 
 
 load_dotenv()
-directory_to_watch = os.getenv("directory_to_watch2")
+directory_to_watch = os.getenv("directory_to_watch1")
 
 
 class MyHandler(FileSystemEventHandler):
