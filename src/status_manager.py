@@ -9,6 +9,13 @@ status_dict = {
     "Robot 4": {"color": "green", "step": "0"}
 }
 
+# 2024-07-31 15:09:28> SYSTEM : Analyze method - start; Method file
+# C:\Program Files (x86)\HAMILTON\Methods\elad\aliquotes_1_3_slack.hsl
+METHOD_START_PATTERN = r"Analyze method - start; Method file (.+)"
+
+# 2024-07-31 15:09:43> USER : Trace - complete; Kinesin Init
+KINESIN_LOG_PATTERN = r"Trace - complete; Kinesin (\w+)"
+
 # List to store specific log lines
 log_trace_lines = []
 
@@ -22,12 +29,27 @@ def ai(line):
             model=MODEL_HIGH,
             messages=messages
         )
-        log_trace_lines.append(m['choices'][0]["message"]["content"])
+        log_trace_lines.append(m["choices"][0]["message"]["content"])
+
+
+def ai_summary(line):
+    messages = [
+        {"role": "system", "content": prompts.summary},
+        {"role": "user", "content": '|'.join(log_trace_lines)}]
+
+    m = completion_with_backoff(
+        model=MODEL_HIGH,
+        messages=messages
+    )
+    return f'DONE! AI SUMMARY: {m["choices"][0]["message"]["content"]}'
 
 
 def analyze(line, robot="Robot 1"):
-    # Capture trace lines
-    match = re.search(r"Trace - complete; Kinesin (\w+)", line)
+    match = re.search(METHOD_START_PATTERN, line)
+    if match:
+        log_trace_lines.append(f"Start method: {match.group(1)}")
+
+    match = re.search(KINESIN_LOG_PATTERN, line)
     if match:
         status_dict[robot]["step"] = match.group(1)
         log_trace_lines.append(line.strip())
@@ -35,6 +57,9 @@ def analyze(line, robot="Robot 1"):
     ai(line)
 
     print(line, status_dict)
+
+    if "SYSTEM : End method - complete;" in line:
+        log_trace_lines.append(ai_summary(log_trace_lines))
 
     if "Execute method - start; Method file" in line:
         status_dict[robot]["color"] = "green"
