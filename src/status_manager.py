@@ -1,12 +1,14 @@
 import re
 from src.third_parties.openai import completion_with_backoff, MODEL_HIGH
 from ai import prompts
+from src import status_color
+
 
 status_dict = {
     "Robot 1": {"color": "green", "step": "0"},
-    "Robot 2": {"color": "red", "step": "0"},
-    "Robot 3": {"color": "green", "step": "0"},
-    "Robot 4": {"color": "green", "step": "0"}
+    "Robot 2": {"color": "off", "step": "0"},
+    "Robot 3": {"color": "off", "step": "0"},
+    "Robot 4": {"color": "off", "step": "0"}
 }
 
 # 2024-07-31 15:09:28> SYSTEM : Analyze method - start; Method file
@@ -61,9 +63,6 @@ def analyze(line, robot="Robot 1"):
     if "SYSTEM : End method - complete;" in line:
         log_trace_lines.append(ai_summary(log_trace_lines))
 
-    if "Execute method - start; Method file" in line:
-        status_dict[robot]["color"] = "green"
-    elif "SYSTEM : End method - complete" in line:
-        status_dict[robot]["color"] = "yellow"
-    elif "error" in line:
-        status_dict[robot]["color"] = "red"
+    new_color = status_color.assign(line.lower())
+    if new_color is not None:
+        status_dict[robot]["color"] = new_color
