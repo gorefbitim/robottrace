@@ -3,7 +3,6 @@ import time
 from dotenv import load_dotenv
 from watchdog.observers.polling import PollingObserver
 from watchdog.events import FileSystemEventHandler
-from status_manager import analyze
 
 
 load_dotenv()
@@ -11,10 +10,11 @@ directory_to_watch = os.getenv("directory_to_watch1")
 
 
 class MyHandler(FileSystemEventHandler):
-    def __init__(self):
+    def __init__(self, log_analyzer):
         self.cur_fn = None
         self.cur_f = None
         self.file_size = 0
+        self.log_analyzer = log_analyzer
 
     def on_created(self, event):
         print(f"C: {event}")
@@ -43,7 +43,7 @@ class MyHandler(FileSystemEventHandler):
         print(cur_line)
 
         while cur_line:
-            analyze(cur_line, "Robot 1")
+            self.log_analyzer.analyze(cur_line, "Robot 1")
 
             # print(cur_line)
             cur_line = self.cur_f.readline()
@@ -51,8 +51,8 @@ class MyHandler(FileSystemEventHandler):
         self.file_size = os.path.getsize(self.cur_fn)
 
 
-def start_observer():
-    event_handler = MyHandler()
+def start_observer(log_analyzer):
+    event_handler = MyHandler(log_analyzer)
     observer = PollingObserver()
     observer.schedule(event_handler, directory_to_watch, recursive=False)
     observer.start()
