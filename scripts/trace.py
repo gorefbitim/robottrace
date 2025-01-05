@@ -1,12 +1,17 @@
 #!/usr/bin/python
 # Tool to watch a log folder for new files / change of files.
+import os
 import time
+from dotenv import load_dotenv
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from scripts.slack import post_message_to_slack
 
 
-directory_to_watch = "/Users/centarixbiotec/robot/logs/"
+# Load environment variables from .env file
+load_dotenv()
+
+directory_to_watch = os.getenv('directory_to_watch1')
 
 
 class MyHandler(FileSystemEventHandler):
